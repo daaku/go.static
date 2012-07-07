@@ -7,7 +7,7 @@ import (
 	"crypto/md5"
 	"flag"
 	"fmt"
-	"github.com/nshah/go.h"
+	"github.com/daaku/go.h"
 	"io/ioutil"
 	"net/http"
 	"path"
