@@ -41,6 +41,22 @@ func (l *LinkStyle) HTML() (h.HTML, error) {
 	return l.cache, nil
 }
 
+type Script struct {
+	Src   string
+	cache h.HTML
+}
+
+func (l *Script) HTML() (h.HTML, error) {
+	if l.cache == nil {
+		url, err := URL(l.Src)
+		if err != nil {
+			return nil, err
+		}
+		l.cache = &h.Script{Src: url}
+	}
+	return l.cache, nil
+}
+
 func notFound(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Set("Cache-Control", "no-cache")
