@@ -140,8 +140,6 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(parts)
-	fmt.Println(parts[2])
 	ce, ok := cache[parts[2]]
 	if !ok {
 		notFound(w, r)
