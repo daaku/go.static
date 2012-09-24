@@ -4,6 +4,7 @@
 package static
 
 import (
+	"bytes"
 	"crypto/md5"
 	"flag"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -22,16 +24,26 @@ var (
 		"static.max-age",
 		time.Hour*87658,
 		"Max age to use in the cache headers.")
+	cacheEnable = flag.Bool(
+		"static.cache",
+		true,
+		"use in memory cache for static resources")
 	fileSystem http.FileSystem
+	cache      = make(map[string]cacheEntry)
 )
 
+type cacheEntry struct {
+	Content []byte
+	ModTime time.Time
+}
+
 type LinkStyle struct {
-	HREF  string
+	HREF  []string
 	cache h.HTML
 }
 
 func (l *LinkStyle) HTML() (h.HTML, error) {
-	if l.cache == nil {
+	if !*cacheEnable || l.cache == nil {
 		url, err := URL(l.HREF)
 		if err != nil {
 			return nil, err
@@ -42,12 +54,12 @@ func (l *LinkStyle) HTML() (h.HTML, error) {
 }
 
 type Script struct {
-	Src   string
+	Src   []string
 	cache h.HTML
 }
 
 func (l *Script) HTML() (h.HTML, error) {
-	if l.cache == nil {
+	if !*cacheEnable || l.cache == nil {
 		url, err := URL(l.Src)
 		if err != nil {
 			return nil, err
@@ -71,25 +83,48 @@ func SetDir(publicDir string) {
 }
 
 // Get a hashed URL for a named file.
-func URL(name string) (string, error) {
-	f, err := fileSystem.Open(name)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
+func URL(names []string) (string, error) {
 	h := md5.New()
-	content, err := ioutil.ReadAll(f)
-	if err != nil {
-		return "", err
-	}
-	_, err = h.Write(content)
-	if err != nil {
-		return "", err
+	var ce cacheEntry
+	for _, name := range names {
+		f, err := fileSystem.Open(name)
+		if err != nil {
+			return "", err
+		}
+		defer f.Close()
+
+		stat, err := f.Stat()
+		if err != nil {
+			return "", err
+		}
+		modTime := stat.ModTime()
+		if ce.ModTime.Before(modTime) {
+			ce.ModTime = modTime
+		}
+
+		content, err := ioutil.ReadAll(f)
+		if err != nil {
+			return "", err
+		}
+		ce.Content = append(ce.Content, content...)
+		_, err = h.Write(content)
+		if err != nil {
+			return "", err
+		}
 	}
 	hex := fmt.Sprintf("%x", h.Sum(nil))
-	url := path.Join(Path, hex[:10], name)
+	hexS := hex[:10]
+	url := path.Join(Path, hexS, joinBasenames(names))
+	cache[hexS] = ce
 	return url, nil
+}
+
+func joinBasenames(names []string) string {
+	basenames := make([]string, len(names))
+	for i, name := range names {
+		basenames[i] = filepath.Base(name)
+	}
+	return strings.Join(basenames, "-")
 }
 
 // Serves the static resource.
@@ -104,22 +139,11 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		notFound(w, r)
 		return
 	}
-	newPath := strings.Join(parts[3:], "/")
 
-	f, err := fileSystem.Open(newPath)
-	if err != nil {
-		notFound(w, r)
-		return
-	}
-	defer f.Close()
-
-	d, err := f.Stat()
-	if err != nil {
-		notFound(w, r)
-		return
-	}
-
-	if d.IsDir() {
+	fmt.Println(parts)
+	fmt.Println(parts[2])
+	ce, ok := cache[parts[2]]
+	if !ok {
 		notFound(w, r)
 		return
 	}
@@ -128,5 +152,5 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 	header.Set(
 		"Cache-Control",
 		fmt.Sprintf("public, max-age=%d", int(cacheMaxAge.Seconds())))
-	http.ServeContent(w, r, d.Name(), d.ModTime(), f)
+	http.ServeContent(w, r, path, ce.ModTime, bytes.NewReader(ce.Content))
 }
