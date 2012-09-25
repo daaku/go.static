@@ -1,6 +1,6 @@
 // Package static provides go.h compatible hashed static asset
 // URIs. This allows for providing long lived cache headers for
-// resources.
+// resources which change as their content changes.
 package static
 
 import (
@@ -44,7 +44,7 @@ type LinkStyle struct {
 
 func (l *LinkStyle) HTML() (h.HTML, error) {
 	if !*cacheEnable || l.cache == nil {
-		url, err := URL(l.HREF)
+		url, err := CombinedURL(l.HREF)
 		if err != nil {
 			return nil, err
 		}
@@ -60,13 +60,57 @@ type Script struct {
 
 func (l *Script) HTML() (h.HTML, error) {
 	if !*cacheEnable || l.cache == nil {
-		url, err := URL(l.Src)
+		url, err := CombinedURL(l.Src)
 		if err != nil {
 			return nil, err
 		}
 		l.cache = &h.Script{Src: url}
 	}
 	return l.cache, nil
+}
+
+// For github.com/daaku/go.h.js.loader compatibility.
+func (l *Script) URLs() []string {
+	url, err := CombinedURL(l.Src)
+	if err != nil {
+		panic(err)
+	}
+	return []string{url}
+}
+
+// For github.com/daaku/go.h.js.loader compatibility.
+func (l *Script) Script() string {
+	return ""
+}
+
+type Img struct {
+	ID    string
+	Class string
+	Style string
+	Src   string
+	Alt   string
+	cache h.HTML
+}
+
+func (i *Img) HTML() (h.HTML, error) {
+	if !*cacheEnable || i.cache == nil {
+		src, err := URL(i.Src)
+		if err != nil {
+			return nil, err
+		}
+		i.cache = &h.Node{
+			Tag:         "img",
+			SelfClosing: true,
+			Attributes: h.Attributes{
+				"id":    i.ID,
+				"class": i.Class,
+				"style": i.Style,
+				"src":   src,
+				"alt":   i.Alt,
+			},
+		}
+	}
+	return i.cache, nil
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
@@ -82,8 +126,13 @@ func SetDir(publicDir string) {
 	fileSystem = http.Dir(publicDir)
 }
 
-// Get a hashed URL for a named file.
-func URL(names []string) (string, error) {
+// Get a hashed URL for a single file.
+func URL(name string) (string, error) {
+	return CombinedURL([]string{name})
+}
+
+// Get a hashed combined URL for all named files.
+func CombinedURL(names []string) (string, error) {
 	h := md5.New()
 	var ce cacheEntry
 	for _, name := range names {
