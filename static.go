@@ -1,6 +1,6 @@
 // Package static provides go.h compatible hashed static asset
 // URIs. This allows for providing long lived cache headers for
-// resources which change as their content changes.
+// resources which change URLs as their content changes.
 package static
 
 import (
