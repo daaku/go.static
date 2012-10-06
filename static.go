@@ -1,6 +1,16 @@
 // Package static provides go.h compatible hashed static asset
 // URIs. This allows for providing long lived cache headers for
 // resources which change URLs as their content changes.
+//
+// TODO
+// - actually dont cache in memory when disabled
+// - defer reading files
+// - gzip support + caching of gzipped data
+// - css processor for handling url()
+// - css minification
+// - js minification
+// - css sprites
+// - support referencing http urls
 package static
 
 import (
@@ -55,6 +65,7 @@ func (l *LinkStyle) HTML() (h.HTML, error) {
 
 type Script struct {
 	Src   []string
+	Async bool
 	cache h.HTML
 }
 
@@ -64,7 +75,10 @@ func (l *Script) HTML() (h.HTML, error) {
 		if err != nil {
 			return nil, err
 		}
-		l.cache = &h.Script{Src: url}
+		l.cache = &h.Script{
+			Src:   url,
+			Async: l.Async,
+		}
 	}
 	return l.cache, nil
 }
