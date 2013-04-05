@@ -25,6 +25,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -36,6 +37,7 @@ type cacheEntry struct {
 }
 
 type Handler struct {
+	sync.RWMutex
 	HttpPath    string        // prefix path for static files
 	MaxAge      time.Duration // max-age for HTTP headers
 	MemoryCache bool          // enable in memory cache
@@ -126,6 +128,8 @@ func (h *Handler) CombinedURL(names []string) (string, error) {
 	hex := fmt.Sprintf("%x", hash.Sum(nil))
 	hexS := hex[:10]
 	url := path.Join(h.HttpPath, hexS, joinBasenames(names))
+	h.Lock()
+	defer h.Unlock()
 	h.cache[hexS] = ce
 	return url, nil
 }
@@ -143,6 +147,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.RLock()
+	defer h.RUnlock()
 	ce, ok := h.cache[parts[2]]
 	if !ok {
 		notFound(w, r)
