@@ -16,7 +16,6 @@ package static
 import (
 	"bytes"
 	"crypto/md5"
-	"errors"
 	"flag"
 	"fmt"
 	"github.com/daaku/go.h"
@@ -29,7 +28,7 @@ import (
 	"time"
 )
 
-var errHandlerRequired = errors.New("a handler is required for static HTML")
+const errHandlerRequired = "go.static: a handler is required for static HTML: %+v"
 
 type cacheEntry struct {
 	Content []byte
@@ -170,7 +169,7 @@ type LinkStyle struct {
 
 func (l *LinkStyle) HTML() (h.HTML, error) {
 	if l.Handler == nil {
-		return nil, errHandlerRequired
+		return nil, fmt.Errorf(errHandlerRequired, l)
 	}
 	if !l.Handler.MemoryCache || l.cache == nil {
 		url, err := l.Handler.CombinedURL(l.HREF)
@@ -191,7 +190,7 @@ type Script struct {
 
 func (l *Script) HTML() (h.HTML, error) {
 	if l.Handler == nil {
-		return nil, errHandlerRequired
+		return nil, fmt.Errorf(errHandlerRequired, l)
 	}
 	if !l.Handler.MemoryCache || l.cache == nil {
 		url, err := l.Handler.CombinedURL(l.Src)
@@ -232,7 +231,7 @@ type Img struct {
 
 func (i *Img) HTML() (h.HTML, error) {
 	if i.Handler == nil {
-		return nil, errHandlerRequired
+		return nil, fmt.Errorf(errHandlerRequired, i)
 	}
 	if !i.Handler.MemoryCache || i.cache == nil {
 		src, err := i.Handler.URL(i.Src)
