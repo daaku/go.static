@@ -1,24 +1,12 @@
 // Package static provides go.h compatible hashed static asset
 // URIs. This allows for providing long lived cache headers for
 // resources which change URLs as their content changes.
-//
-// TODO
-// - actually dont cache in memory when disabled
-// - defer reading files
-// - gzip support + caching of gzipped data
-// - css processor for handling url()
-// - css minification
-// - js minification
-// - css sprites
-// - support referencing http urls
 package static
 
 import (
 	"bytes"
 	"crypto/md5"
-	"flag"
 	"fmt"
-	"github.com/daaku/go.h"
 	"io/ioutil"
 	"net/http"
 	"path"
@@ -26,6 +14,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/GeertJohan/go.rice"
+	"github.com/daaku/go.h"
 )
 
 const errHandlerRequired = "go.static: a handler is required for static HTML: %+v"
@@ -40,33 +31,8 @@ type Handler struct {
 	HttpPath    string        // prefix path for static files
 	MaxAge      time.Duration // max-age for HTTP headers
 	MemoryCache bool          // enable in memory cache
-	DiskPath    string        // path on disk to serve
+	Box         *rice.Box
 	cache       map[string]cacheEntry
-}
-
-func HandlerFlag(name string) *Handler {
-	h := &Handler{cache: make(map[string]cacheEntry)}
-	flag.StringVar(
-		&h.HttpPath,
-		name+".http-path",
-		"/static/",
-		name+": http path prefix for handler")
-	flag.DurationVar(
-		&h.MaxAge,
-		name+".max-age",
-		time.Hour*87658,
-		name+": max age to use in the cache headers")
-	flag.BoolVar(
-		&h.MemoryCache,
-		name+".memory-cache",
-		true,
-		name+": enable in-memory cache")
-	flag.StringVar(
-		&h.DiskPath,
-		name+".disk-path",
-		"",
-		name+": the directory to serve static files from")
-	return h
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
@@ -85,10 +51,6 @@ func joinBasenames(names []string) string {
 	return strings.Join(basenames, "-")
 }
 
-func (h *Handler) fileSystem() http.FileSystem {
-	return http.Dir(h.DiskPath)
-}
-
 // Get a hashed URL for a single file.
 func (h *Handler) URL(name string) (string, error) {
 	return h.CombinedURL([]string{name})
@@ -99,7 +61,7 @@ func (h *Handler) CombinedURL(names []string) (string, error) {
 	hash := md5.New()
 	var ce cacheEntry
 	for _, name := range names {
-		f, err := h.fileSystem().Open(name)
+		f, err := h.Box.HTTPBox().Open(name)
 		if err != nil {
 			return "", err
 		}
@@ -129,6 +91,9 @@ func (h *Handler) CombinedURL(names []string) (string, error) {
 	url := path.Join(h.HttpPath, hexS, joinBasenames(names))
 	h.Lock()
 	defer h.Unlock()
+	if h.cache == nil {
+		h.cache = make(map[string]cacheEntry)
+	}
 	h.cache[hexS] = ce
 	return url, nil
 }
@@ -148,6 +113,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	h.RLock()
 	defer h.RUnlock()
+	if h.cache == nil {
+		notFound(w, r)
+		return
+	}
 	ce, ok := h.cache[parts[2]]
 	if !ok {
 		notFound(w, r)
@@ -203,20 +172,6 @@ func (l *Script) HTML() (h.HTML, error) {
 		}
 	}
 	return l.cache, nil
-}
-
-// For github.com/daaku/go.h.js.loader compatibility.
-func (l *Script) URLs() []string {
-	url, err := l.Handler.CombinedURL(l.Src)
-	if err != nil {
-		panic(err)
-	}
-	return []string{url}
-}
-
-// For github.com/daaku/go.h.js.loader compatibility.
-func (l *Script) Script() string {
-	return ""
 }
 
 type Img struct {
