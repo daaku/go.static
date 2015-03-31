@@ -148,7 +148,7 @@ func (h *Handler) load(name string) (*file, error) {
 	return f, nil
 }
 
-// Get a hashed combined URL for all named files.
+// URL returns a hashed URL for all the given component names.
 func (h *Handler) URL(names ...string) (string, error) {
 	if len(names) == 0 {
 		return "", errZeroNames
@@ -175,7 +175,7 @@ func (h *Handler) URL(names ...string) (string, error) {
 	return path.Join(h.Path, value), nil
 }
 
-// Serves the static resource.
+// ServeHTTP handles requests for hashed URLs.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	if !strings.HasPrefix(path, h.Path) {
@@ -221,11 +221,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// LinkStyle provides a h.LinkStyle where the HREFs are combined and served
+// using the specified Handler.
 type LinkStyle struct {
 	Handler *Handler
 	HREF    []string
 }
 
+// HTML returns the <link> tag with the appropriate attributes.
 func (l *LinkStyle) HTML() (h.HTML, error) {
 	url, err := l.Handler.URL(l.HREF...)
 	if err != nil {
@@ -234,12 +237,15 @@ func (l *LinkStyle) HTML() (h.HTML, error) {
 	return &h.LinkStyle{HREF: url}, nil
 }
 
+// Script provides a h.Script where the Srcs are combined and served using the
+// specified Handler.
 type Script struct {
 	Handler *Handler
 	Src     []string
 	Async   bool
 }
 
+// HTML returns the <script> tag with the appropriate attributes.
 func (l *Script) HTML() (h.HTML, error) {
 	url, err := l.Handler.URL(l.Src...)
 	if err != nil {
@@ -251,6 +257,7 @@ func (l *Script) HTML() (h.HTML, error) {
 	}, nil
 }
 
+// Img provides a h.Img where the src is served using the specified Handler.
 type Img struct {
 	Handler *Handler
 	ID      string
@@ -260,6 +267,7 @@ type Img struct {
 	Alt     string
 }
 
+// HTML returns the <img> tag with the appropriate attributes.
 func (i *Img) HTML() (h.HTML, error) {
 	src, err := i.Handler.URL(i.Src)
 	if err != nil {
