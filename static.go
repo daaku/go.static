@@ -21,6 +21,8 @@ import (
 	"github.com/daaku/go.h"
 )
 
+const maxAge = time.Hour * 24 * 365 * 10
+
 var errZeroNames = errors.New("static: zero names given")
 
 func disableCaching(w http.ResponseWriter) {
@@ -100,10 +102,9 @@ type Box interface {
 
 // Handler serves and provides URLs for static resources.
 type Handler struct {
-	Path   string        // Path at which Handler is configured.
-	Secret string        // Secret to sign URLs.
-	Box    Box           // Box of files to serve.
-	MaxAge time.Duration // Max-Age HTTP header.
+	Path   string // Path at which Handler is configured.
+	Secret string // Secret to sign URLs.
+	Box    Box    // Box of files to serve.
 
 	mu    sync.RWMutex
 	files map[string]*file
@@ -214,7 +215,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	header := w.Header()
 	header.Set(
 		"Cache-Control",
-		fmt.Sprintf("public, max-age=%d", int(h.MaxAge.Seconds())))
+		fmt.Sprintf("public, max-age=%d", int(maxAge.Seconds())))
 	header.Set("Content-Length", fmt.Sprint(contentLength))
 	for _, f := range files {
 		w.Write(f.Content)
