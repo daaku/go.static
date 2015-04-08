@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"path"
 	"path/filepath"
@@ -183,9 +184,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	contentType := ""
 	encoded := path[len(h.Path):]
 	if ext := filepath.Ext(encoded); ext != "" {
 		encoded = encoded[:len(encoded)-len(ext)]
+		contentType = mime.TypeByExtension(ext)
 	}
 
 	files, err := decode(encoded)
@@ -210,12 +213,15 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		files[i] = loaded
 	}
 
-	// TODO: content-type?
 	header := w.Header()
 	header.Set(
 		"Cache-Control",
 		fmt.Sprintf("public, max-age=%d", int(maxAge.Seconds())))
 	header.Set("Content-Length", fmt.Sprint(contentLength))
+	if contentType != "" {
+		header.Set("Content-Type", contentType)
+	}
+
 	for _, f := range files {
 		w.Write(f.Content)
 	}
