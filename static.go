@@ -55,7 +55,7 @@ type file struct {
 	Hash    string
 }
 
-func encode(files []*file, secret string) (string, error) {
+func encode(files []*file) (string, error) {
 	var parts [][]string
 	for _, f := range files {
 		parts = append(parts, []string{f.Name, f.Hash})
@@ -69,7 +69,7 @@ func encode(files []*file, secret string) (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-func decode(value, secret string) ([]*file, error) {
+func decode(value string) ([]*file, error) {
 	decoded, err := base64.URLEncoding.DecodeString(value)
 	if err != nil {
 		return nil, errInvalidURL(value)
@@ -102,9 +102,8 @@ type Box interface {
 
 // Handler serves and provides URLs for static resources.
 type Handler struct {
-	Path   string // Path at which Handler is configured.
-	Secret string // Secret to sign URLs.
-	Box    Box    // Box of files to serve.
+	Path string // Path at which Handler is configured.
+	Box  Box    // Box of files to serve.
 
 	mu    sync.RWMutex
 	files map[string]*file
@@ -164,7 +163,7 @@ func (h *Handler) URL(names ...string) (string, error) {
 		files = append(files, f)
 	}
 
-	value, err := encode(files, h.Secret)
+	value, err := encode(files)
 	if err != nil {
 		return "", err
 	}
@@ -189,7 +188,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		encoded = encoded[:len(encoded)-len(ext)]
 	}
 
-	files, err := decode(encoded, h.Secret)
+	files, err := decode(encoded)
 	if err != nil {
 		badRequest(w)
 		return

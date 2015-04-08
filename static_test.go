@@ -13,8 +13,6 @@ import (
 	"github.com/facebookgo/ensure"
 )
 
-const theSecret = "42"
-
 func ensureDisableCaching(t testing.TB, h http.Header) {
 	ensure.DeepEqual(t, h.Get("Cache-Control"), "no-cache")
 	ensure.DeepEqual(t, h.Get("Pragma"), "no-cache")
@@ -46,7 +44,7 @@ func TestErrInvalidURL(t *testing.T) {
 
 func TestEncodeSingle(t *testing.T) {
 	files := []*file{{Name: "foo", Hash: "bar"}}
-	value, err := encode(files, theSecret)
+	value, err := encode(files)
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, value, "W1siZm9vIiwiYmFyIl1d")
 }
@@ -56,19 +54,19 @@ func TestEncodeMultiple(t *testing.T) {
 		{Name: "foo1", Hash: "bar1"},
 		{Name: "foo2", Hash: "bar2"},
 	}
-	value, err := encode(files, theSecret)
+	value, err := encode(files)
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, value, "W1siZm9vMSIsImJhcjEiXSxbImZvbzIiLCJiYXIyIl1d")
 }
 
 func TestDecodeSingle(t *testing.T) {
-	value, err := decode("W1siZm9vIiwiYmFyIl1d", theSecret)
+	value, err := decode("W1siZm9vIiwiYmFyIl1d")
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, value, []*file{{Name: "foo", Hash: "bar"}})
 }
 
 func TestDecodeMultiple(t *testing.T) {
-	value, err := decode("W1siZm9vMSIsImJhcjEiXSxbImZvbzIiLCJiYXIyIl1d", theSecret)
+	value, err := decode("W1siZm9vMSIsImJhcjEiXSxbImZvbzIiLCJiYXIyIl1d")
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, value, []*file{
 		{Name: "foo1", Hash: "bar1"},
@@ -77,21 +75,21 @@ func TestDecodeMultiple(t *testing.T) {
 }
 
 func TestDecodeInvalidBase64(t *testing.T) {
-	value, err := decode("#", theSecret)
+	value, err := decode("#")
 	ensure.True(t, value == nil)
 	ensure.Err(t, err, regexp.MustCompile(`static: invalid URL "#"`))
 }
 
 func TestDecodeInvalidJSON(t *testing.T) {
 	encoded := base64.URLEncoding.EncodeToString([]byte("x"))
-	value, err := decode(encoded, theSecret)
+	value, err := decode(encoded)
 	ensure.True(t, value == nil)
 	ensure.Err(t, err, regexp.MustCompile(`static: invalid URL "eA=="`))
 }
 
 func TestDecodeNotTwoParts(t *testing.T) {
 	encoded := base64.URLEncoding.EncodeToString([]byte("[[]]"))
-	value, err := decode(encoded, theSecret)
+	value, err := decode(encoded)
 	ensure.True(t, value == nil)
 	ensure.Err(t, err, regexp.MustCompile(`static: invalid URL "W1tdXQ=="`))
 }
