@@ -57,12 +57,7 @@ func (e errInvalidURL) Error() string {
 	return fmt.Sprintf("static: invalid URL %q", string(e))
 }
 
-type file struct {
-	Name    string
-	Content []byte
-	Hash    string
-}
-
+// we drop base64 padding in our URLs
 func dropPadding(s string) string {
 	return strings.TrimRight(s, "=")
 }
@@ -79,6 +74,12 @@ func addPadding(s string) string {
 		return s + paddings[3-l]
 	}
 	return s
+}
+
+type file struct {
+	Name    string
+	Content []byte
+	Hash    string
 }
 
 func encode(files []*file) (string, error) {
@@ -174,7 +175,8 @@ func (h *Handler) load(name string) (*file, error) {
 	return f, nil
 }
 
-// URL returns a hashed URL for all the given component names.
+// URL returns a hashed URL for all the given component names. It uses the
+// extension of the first file as the extension for the generated URL.
 func (h *Handler) URL(names ...string) (string, error) {
 	if len(names) == 0 {
 		return "", errZeroNames
