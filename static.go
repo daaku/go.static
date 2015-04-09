@@ -83,9 +83,9 @@ type file struct {
 }
 
 func encode(files []*file) (string, error) {
-	var parts [][]string
+	parts := make([][2]string, 0, len(files))
 	for _, f := range files {
-		parts = append(parts, []string{f.Name, f.Hash})
+		parts = append(parts, [2]string{f.Name, f.Hash})
 	}
 
 	b, err := json.Marshal(parts)
