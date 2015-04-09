@@ -68,7 +68,7 @@ func dropPadding(s string) string {
 }
 
 // so we only allocate these strings once
-var paddings = []string{
+var paddings = [...]string{
 	"=",
 	"==",
 	"===",
