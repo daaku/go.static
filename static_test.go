@@ -183,7 +183,7 @@ func TestCombinedURLMultiple(t *testing.T) {
 	}
 	v, err := h.URL("n1", "n2")
 	ensure.Nil(t, err)
-	ensure.DeepEqual(t, v, "W1sibjEiLCJhY2JkMThkYiJdLFsibjIiLCIzN2I1MWQxOSJdXQ==")
+	ensure.DeepEqual(t, v, "W1sibjEiLCJhY2JkMThkYiJdLFsibjIiLCIzN2I1MWQxOSJdXQ")
 }
 
 func TestCombinedURLExt(t *testing.T) {
@@ -200,7 +200,7 @@ func TestCombinedURLExt(t *testing.T) {
 	}
 	v, err := h.URL("n1.js", "n2")
 	ensure.Nil(t, err)
-	ensure.DeepEqual(t, v, "W1sibjEuanMiLCJhY2JkMThkYiJdLFsibjIiLCIzN2I1MWQxOSJdXQ==.js")
+	ensure.DeepEqual(t, v, "W1sibjEuanMiLCJhY2JkMThkYiJdLFsibjIiLCIzN2I1MWQxOSJdXQ.js")
 }
 
 func TestServeCombinedURLWithExt(t *testing.T) {
@@ -218,7 +218,7 @@ func TestServeCombinedURLWithExt(t *testing.T) {
 	}
 	v, err := h.URL("n1.js", "n2")
 	ensure.Nil(t, err)
-	ensure.DeepEqual(t, v, "/W1sibjEuanMiLCJhY2JkMThkYiJdLFsibjIiLCIzN2I1MWQxOSJdXQ==.js")
+	ensure.DeepEqual(t, v, "/W1sibjEuanMiLCJhY2JkMThkYiJdLFsibjIiLCIzN2I1MWQxOSJdXQ.js")
 	w := httptest.NewRecorder()
 	r := &http.Request{
 		URL: &url.URL{
@@ -273,7 +273,7 @@ func TestServeLoadError(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := &http.Request{
 		URL: &url.URL{
-			Path: "/W1sibjEuanMiLCJhY2JkMThkYiJdLFsibjIiLCIzN2I1MWQxOSJdXQ==.js",
+			Path: "/W1sibjEuanMiLCJhY2JkMThkYiJdLFsibjIiLCIzN2I1MWQxOSJdXQ.js",
 		},
 	}
 	h.ServeHTTP(w, r)
@@ -328,7 +328,7 @@ func TestLinkStyle(t *testing.T) {
 	v, err := l.HTML()
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, v, &h.LinkStyle{
-		HREF: "W1siZm9vIiwiYWNiZDE4ZGIiXV0=",
+		HREF: "W1siZm9vIiwiYWNiZDE4ZGIiXV0",
 	})
 }
 
@@ -361,7 +361,7 @@ func TestScript(t *testing.T) {
 	v, err := l.HTML()
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, v, &h.Script{
-		Src:   "W1siZm9vIiwiYWNiZDE4ZGIiXV0=",
+		Src:   "W1siZm9vIiwiYWNiZDE4ZGIiXV0",
 		Async: true,
 	})
 }
@@ -397,7 +397,7 @@ func TestImg(t *testing.T) {
 	v, err := l.HTML()
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, v, &h.Img{
-		Src:   "W1siZm9vIiwiYWNiZDE4ZGIiXV0=",
+		Src:   "W1siZm9vIiwiYWNiZDE4ZGIiXV0",
 		ID:    l.ID,
 		Class: l.Class,
 		Style: l.Style,

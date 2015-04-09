@@ -56,6 +56,24 @@ type file struct {
 	Hash    string
 }
 
+func dropPadding(s string) string {
+	return strings.TrimRight(s, "=")
+}
+
+// so we only allocate these strings once
+var paddings = []string{
+	"=",
+	"==",
+	"===",
+}
+
+func addPadding(s string) string {
+	if l := len(s) % 4; l > 0 {
+		return s + paddings[3-l]
+	}
+	return s
+}
+
 func encode(files []*file) (string, error) {
 	var parts [][]string
 	for _, f := range files {
@@ -67,11 +85,11 @@ func encode(files []*file) (string, error) {
 		return "", errors.New("static: could not encode URL")
 	}
 
-	return base64.URLEncoding.EncodeToString(b), nil
+	return dropPadding(base64.URLEncoding.EncodeToString(b)), nil
 }
 
 func decode(value string) ([]*file, error) {
-	decoded, err := base64.URLEncoding.DecodeString(value)
+	decoded, err := base64.URLEncoding.DecodeString(addPadding(value))
 	if err != nil {
 		return nil, errInvalidURL(value)
 	}
