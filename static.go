@@ -182,7 +182,7 @@ func (h *Handler) URL(names ...string) (string, error) {
 		return "", errZeroNames
 	}
 
-	var files []*file
+	files := make([]*file, 0, len(names))
 	for _, name := range names {
 		f, err := h.load(name)
 		if err != nil {
