@@ -102,14 +102,14 @@ func decode(value string) ([]*file, error) {
 		return nil, errInvalidURL(value)
 	}
 
-	var parts [][]string
+	var parts [][2]string
 	if err := json.NewDecoder(bytes.NewReader(decoded)).Decode(&parts); err != nil {
 		return nil, errInvalidURL(value)
 	}
 
-	var files []*file
+	files := make([]*file, 0, len(parts))
 	for _, part := range parts {
-		if len(part) != 2 {
+		if len(part) != 2 || part[0] == "" || part[1] == "" {
 			return nil, errInvalidURL(value)
 		}
 		files = append(files, &file{
