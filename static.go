@@ -121,8 +121,8 @@ func decode(value string) ([]*file, error) {
 	return files, nil
 }
 
-// Box is where the files are loaded from. Practically you'll probably want to
-// use https://github.com/GeertJohan/go.rice.
+// Box is where the files are loaded from. You'll probably want to use
+// https://github.com/GeertJohan/go.rice.
 type Box interface {
 	Bytes(name string) ([]byte, error)
 }
