@@ -42,6 +42,19 @@ func TestErrInvalidURL(t *testing.T) {
 	ensure.DeepEqual(t, errInvalidURL("foo").Error(), `static: invalid URL "foo"`)
 }
 
+func TestAddPadding(t *testing.T) {
+	cases := []struct{ In, Out string }{
+		{In: "a", Out: "a==="},
+		{In: "aa", Out: "aa=="},
+		{In: "aaa", Out: "aaa="},
+		{In: "aaaa", Out: "aaaa"},
+		{In: "aaaaa", Out: "aaaaa==="},
+	}
+	for _, c := range cases {
+		ensure.DeepEqual(t, addPadding(c.In), c.Out, c)
+	}
+}
+
 func TestEncodeSingle(t *testing.T) {
 	files := []*file{{Name: "foo", Hash: "bar"}}
 	value, err := encode(files)
