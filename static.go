@@ -24,7 +24,10 @@ import (
 
 const maxAge = time.Hour * 24 * 365 * 10
 
-var errZeroNames = errors.New("static: zero names given")
+var (
+	errZeroNames = errors.New("static: zero names given")
+	cacheControl = fmt.Sprintf("public, max-age=%d", int(maxAge.Seconds()))
+)
 
 func disableCaching(w http.ResponseWriter) {
 	header := w.Header()
@@ -232,9 +235,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	header := w.Header()
-	header.Set(
-		"Cache-Control",
-		fmt.Sprintf("public, max-age=%d", int(maxAge.Seconds())))
+	header.Set("Cache-Control", cacheControl)
 	header.Set("Content-Length", fmt.Sprint(contentLength))
 	if contentType != "" {
 		header.Set("Content-Type", contentType)

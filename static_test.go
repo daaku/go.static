@@ -243,7 +243,7 @@ func TestServeCombinedURLWithExt(t *testing.T) {
 	ensure.DeepEqual(t, w.Body.String(), "foobar")
 	ensure.DeepEqual(t, w.Header(), http.Header{
 		"Content-Length": []string{"6"},
-		"Cache-Control":  []string{"public, max-age=315360000"},
+		"Cache-Control":  []string{cacheControl},
 		"Content-Type":   []string{"application/javascript"},
 	})
 }
