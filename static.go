@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -236,7 +237,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	header := w.Header()
 	header.Set("Cache-Control", cacheControl)
-	header.Set("Content-Length", fmt.Sprint(contentLength))
+	header.Set("Content-Length", strconv.Itoa(contentLength))
 	if contentType != "" {
 		header.Set("Content-Type", contentType)
 	}
