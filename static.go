@@ -82,7 +82,7 @@ type file struct {
 	Hash    string
 }
 
-func encode(files []*file) (string, error) {
+func encode(files []file) (string, error) {
 	parts := make([][2]string, 0, len(files))
 	for _, f := range files {
 		parts = append(parts, [2]string{f.Name, f.Hash})
@@ -96,7 +96,7 @@ func encode(files []*file) (string, error) {
 	return dropPadding(base64.URLEncoding.EncodeToString(b)), nil
 }
 
-func decode(value string) ([]*file, error) {
+func decode(value string) ([]file, error) {
 	decoded, err := base64.URLEncoding.DecodeString(addPadding(value))
 	if err != nil {
 		return nil, errInvalidURL(value)
@@ -107,12 +107,12 @@ func decode(value string) ([]*file, error) {
 		return nil, errInvalidURL(value)
 	}
 
-	files := make([]*file, 0, len(parts))
+	files := make([]file, 0, len(parts))
 	for _, part := range parts {
 		if len(part) != 2 || part[0] == "" || part[1] == "" {
 			return nil, errInvalidURL(value)
 		}
-		files = append(files, &file{
+		files = append(files, file{
 			Name: part[0],
 			Hash: part[1],
 		})
@@ -133,16 +133,16 @@ type Handler struct {
 	Box  Box    // Box of files to serve.
 
 	mu    sync.RWMutex
-	files map[string]*file
+	files map[string]file
 }
 
-func (h *Handler) load(name string) (*file, error) {
+func (h *Handler) load(name string) (file, error) {
 	// fast path
 	h.mu.RLock()
-	f := h.files[name]
+	f, found := h.files[name]
 	h.mu.RUnlock()
 
-	if f != nil {
+	if found {
 		return f, nil
 	}
 
@@ -151,24 +151,24 @@ func (h *Handler) load(name string) (*file, error) {
 	defer h.mu.Unlock()
 
 	// check again in case someone else populated it
-	f = h.files[name]
-	if f != nil {
+	f, found = h.files[name]
+	if found {
 		return f, nil
 	}
 
 	contents, err := h.Box.Bytes(name)
 	if err != nil {
-		return nil, err
+		return file{}, err
 	}
 
 	hash := fmt.Sprintf("%x", md5.Sum(contents))
-	f = &file{
+	f = file{
 		Name:    name,
 		Content: contents,
 		Hash:    hash[:hashLen],
 	}
 	if h.files == nil {
-		h.files = make(map[string]*file)
+		h.files = make(map[string]file)
 	}
 	h.files[name] = f
 
@@ -182,7 +182,7 @@ func (h *Handler) URL(names ...string) (string, error) {
 		return "", errZeroNames
 	}
 
-	files := make([]*file, 0, len(names))
+	files := make([]file, 0, len(names))
 	for _, name := range names {
 		f, err := h.load(name)
 		if err != nil {

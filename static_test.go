@@ -56,14 +56,14 @@ func TestAddPadding(t *testing.T) {
 }
 
 func TestEncodeSingle(t *testing.T) {
-	files := []*file{{Name: "foo", Hash: "bar"}}
+	files := []file{{Name: "foo", Hash: "bar"}}
 	value, err := encode(files)
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, value, "W1siZm9vIiwiYmFyIl1d")
 }
 
 func TestEncodeMultiple(t *testing.T) {
-	files := []*file{
+	files := []file{
 		{Name: "foo1", Hash: "bar1"},
 		{Name: "foo2", Hash: "bar2"},
 	}
@@ -75,13 +75,13 @@ func TestEncodeMultiple(t *testing.T) {
 func TestDecodeSingle(t *testing.T) {
 	value, err := decode("W1siZm9vIiwiYmFyIl1d")
 	ensure.Nil(t, err)
-	ensure.DeepEqual(t, value, []*file{{Name: "foo", Hash: "bar"}})
+	ensure.DeepEqual(t, value, []file{{Name: "foo", Hash: "bar"}})
 }
 
 func TestDecodeMultiple(t *testing.T) {
 	value, err := decode("W1siZm9vMSIsImJhcjEiXSxbImZvbzIiLCJiYXIyIl1d")
 	ensure.Nil(t, err)
-	ensure.DeepEqual(t, value, []*file{
+	ensure.DeepEqual(t, value, []file{
 		{Name: "foo1", Hash: "bar1"},
 		{Name: "foo2", Hash: "bar2"},
 	})
@@ -123,7 +123,7 @@ func TestLoadFromBox(t *testing.T) {
 	}
 	f, err := h.load(magic)
 	ensure.Nil(t, err)
-	ensure.DeepEqual(t, f, &file{
+	ensure.DeepEqual(t, f, file{
 		Name:    magic,
 		Content: []byte(magic),
 		Hash:    "acbd18db",
@@ -140,7 +140,7 @@ func TestLoadFromCache(t *testing.T) {
 	}
 	f, err := h.load(magic)
 	ensure.Nil(t, err)
-	ensure.DeepEqual(t, f, &file{
+	ensure.DeepEqual(t, f, file{
 		Name:    magic,
 		Content: []byte(magic),
 		Hash:    "acbd18db",
@@ -148,7 +148,7 @@ func TestLoadFromCache(t *testing.T) {
 	h.Box = nil
 	f2, err := h.load(magic)
 	ensure.Nil(t, err)
-	ensure.True(t, f == f2)
+	ensure.DeepEqual(t, f2, f)
 }
 
 func TestLoadFromBoxError(t *testing.T) {
@@ -158,8 +158,7 @@ func TestLoadFromBoxError(t *testing.T) {
 			return nil, errors.New(msg)
 		}),
 	}
-	f, err := h.load("baz")
-	ensure.True(t, f == nil)
+	_, err := h.load("baz")
 	ensure.Err(t, err, regexp.MustCompile(msg))
 }
 
