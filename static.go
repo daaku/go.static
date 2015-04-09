@@ -23,7 +23,10 @@ import (
 	"github.com/daaku/go.h"
 )
 
-const maxAge = time.Hour * 24 * 365 * 10
+const (
+	maxAge  = time.Hour * 24 * 365 * 10
+	hashLen = 8
+)
 
 var (
 	errZeroNames = errors.New("static: zero names given")
@@ -161,7 +164,7 @@ func (h *Handler) load(name string) (*file, error) {
 	f = &file{
 		Name:    name,
 		Content: contents,
-		Hash:    hash[:8],
+		Hash:    hash[:hashLen],
 	}
 	if h.files == nil {
 		h.files = make(map[string]*file)
