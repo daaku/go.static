@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/daaku/go.h"
 	"github.com/facebookgo/ensure"
 )
@@ -16,6 +18,10 @@ import (
 func ensureDisableCaching(t testing.TB, h http.Header) {
 	ensure.DeepEqual(t, h.Get("Cache-Control"), "no-cache")
 	ensure.DeepEqual(t, h.Get("Pragma"), "no-cache")
+}
+
+func makeCtx(h *Handler) context.Context {
+	return NewContext(context.Background(), h)
 }
 
 func TestDisableCaching(t *testing.T) {
@@ -315,29 +321,29 @@ func TestServeHashMismatch(t *testing.T) {
 
 func TestLinkStyleInvalidHREF(t *testing.T) {
 	givenErr := errors.New("")
+	ctx := makeCtx(&Handler{
+		Box: funcBox(func(name string) ([]byte, error) {
+			return nil, givenErr
+		}),
+	})
 	l := LinkStyle{
-		Handler: &Handler{
-			Box: funcBox(func(name string) ([]byte, error) {
-				return nil, givenErr
-			}),
-		},
 		HREF: []string{"foo"},
 	}
-	v, err := l.HTML()
+	v, err := l.HTML(ctx)
 	ensure.Nil(t, v)
 	ensure.DeepEqual(t, err, givenErr)
 }
 
 func TestLinkStyle(t *testing.T) {
+	ctx := makeCtx(&Handler{
+		Box: funcBox(func(name string) ([]byte, error) {
+			return []byte("foo"), nil
+		}),
+	})
 	l := LinkStyle{
-		Handler: &Handler{
-			Box: funcBox(func(name string) ([]byte, error) {
-				return []byte("foo"), nil
-			}),
-		},
 		HREF: []string{"foo"},
 	}
-	v, err := l.HTML()
+	v, err := l.HTML(ctx)
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, v, &h.LinkStyle{
 		HREF: "W1siZm9vIiwiYWNiZDE4ZGIiXV0",
@@ -346,31 +352,30 @@ func TestLinkStyle(t *testing.T) {
 
 func TestScriptInvalidSrc(t *testing.T) {
 	givenErr := errors.New("")
-	h := Handler{
+	ctx := makeCtx(&Handler{
 		Box: funcBox(func(name string) ([]byte, error) {
 			return nil, givenErr
 		}),
-	}
+	})
 	l := Script{
-		Handler: &h,
-		Src:     []string{"foo"},
+		Src: []string{"foo"},
 	}
-	v, err := l.HTML()
+	v, err := l.HTML(ctx)
 	ensure.Nil(t, v)
 	ensure.DeepEqual(t, err, givenErr)
 }
 
 func TestScript(t *testing.T) {
+	ctx := makeCtx(&Handler{
+		Box: funcBox(func(name string) ([]byte, error) {
+			return []byte("foo"), nil
+		}),
+	})
 	l := Script{
-		Handler: &Handler{
-			Box: funcBox(func(name string) ([]byte, error) {
-				return []byte("foo"), nil
-			}),
-		},
 		Src:   []string{"foo"},
 		Async: true,
 	}
-	v, err := l.HTML()
+	v, err := l.HTML(ctx)
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, v, &h.Script{
 		Src:   "W1siZm9vIiwiYWNiZDE4ZGIiXV0",
@@ -380,33 +385,33 @@ func TestScript(t *testing.T) {
 
 func TestImgInvalidSrc(t *testing.T) {
 	givenErr := errors.New("")
+	ctx := makeCtx(&Handler{
+		Box: funcBox(func(name string) ([]byte, error) {
+			return nil, givenErr
+		}),
+	})
 	l := Img{
-		Handler: &Handler{
-			Box: funcBox(func(name string) ([]byte, error) {
-				return nil, givenErr
-			}),
-		},
 		Src: "foo",
 	}
-	v, err := l.HTML()
+	v, err := l.HTML(ctx)
 	ensure.Nil(t, v)
 	ensure.DeepEqual(t, err, givenErr)
 }
 
 func TestImg(t *testing.T) {
+	ctx := makeCtx(&Handler{
+		Box: funcBox(func(name string) ([]byte, error) {
+			return []byte("foo"), nil
+		}),
+	})
 	l := Img{
-		Handler: &Handler{
-			Box: funcBox(func(name string) ([]byte, error) {
-				return []byte("foo"), nil
-			}),
-		},
 		Src:   "foo",
 		ID:    "a",
 		Class: "b",
 		Style: "c",
 		Alt:   "d",
 	}
-	v, err := l.HTML()
+	v, err := l.HTML(ctx)
 	ensure.Nil(t, err)
 	ensure.DeepEqual(t, v, &h.Img{
 		Src:   "W1siZm9vIiwiYWNiZDE4ZGIiXV0",
