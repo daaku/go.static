@@ -32,8 +32,9 @@ const (
 )
 
 var (
-	errZeroNames = errors.New("static: zero names given")
-	cacheControl = fmt.Sprintf("public, max-age=%d", int(maxAge.Seconds()))
+	errZeroNames          = errors.New("static: zero names given")
+	errNoHandlerInContext = errors.New("status: no handler in context")
+	cacheControl          = fmt.Sprintf("public, max-age=%d", int(maxAge.Seconds()))
 )
 
 func disableCaching(w http.ResponseWriter) {
@@ -362,5 +363,9 @@ func FromContext(ctx context.Context) *Handler {
 }
 
 func URL(ctx context.Context, names ...string) (string, error) {
-	return FromContext(ctx).URL(names...)
+	h := FromContext(ctx)
+	if h == nil {
+		return "", errNoHandlerInContext
+	}
+	return h.URL(names...)
 }

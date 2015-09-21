@@ -421,3 +421,9 @@ func TestImg(t *testing.T) {
 		Alt:   l.Alt,
 	})
 }
+
+func TestNoHandlerInContext(t *testing.T) {
+	u, err := URL(context.Background(), "a")
+	ensure.True(t, err == errNoHandlerInContext, err)
+	ensure.DeepEqual(t, u, "")
+}
