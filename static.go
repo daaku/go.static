@@ -33,7 +33,7 @@ const (
 
 var (
 	errZeroNames          = errors.New("static: zero names given")
-	errNoHandlerInContext = errors.New("status: no handler in context")
+	errNoHandlerInContext = errors.New("static: no handler in context")
 	cacheControl          = fmt.Sprintf("public, max-age=%d", int(maxAge.Seconds()))
 )
 
