@@ -422,6 +422,18 @@ func TestImg(t *testing.T) {
 	})
 }
 
+func TestInput(t *testing.T) {
+	ctx := makeCtx(&Handler{
+		Box: funcBox(func(name string) ([]byte, error) {
+			return []byte("foo"), nil
+		}),
+	})
+	l := Input{Src: "foo"}
+	v, err := l.HTML(ctx)
+	ensure.Nil(t, err)
+	ensure.DeepEqual(t, v, &h.Input{Src: "W1siZm9vIiwiYWNiZDE4ZGIiXV0"})
+}
+
 func TestNoHandlerInContext(t *testing.T) {
 	u, err := URL(context.Background(), "a")
 	ensure.True(t, err == errNoHandlerInContext, err)

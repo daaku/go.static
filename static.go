@@ -349,6 +349,44 @@ func (l *Favicon) HTML(ctx context.Context) (h.HTML, error) {
 	}, nil
 }
 
+// Input renders a HTML <input> tag with the Src URL transformed.
+type Input struct {
+	ID          string
+	Class       string
+	Name        string
+	Style       string
+	Type        string
+	Value       string
+	Src         string
+	Placeholder string
+	Checked     bool
+	Multiple    bool
+	Data        map[string]interface{}
+	Inner       h.HTML
+}
+
+// HTML renders the content.
+func (i *Input) HTML(ctx context.Context) (h.HTML, error) {
+	src, err := URL(ctx, i.Src)
+	if err != nil {
+		return nil, err
+	}
+	return &h.Input{
+		ID:          i.ID,
+		Class:       i.Class,
+		Name:        i.Name,
+		Style:       i.Style,
+		Type:        i.Type,
+		Value:       i.Value,
+		Src:         src,
+		Placeholder: i.Placeholder,
+		Checked:     i.Checked,
+		Multiple:    i.Multiple,
+		Data:        i.Data,
+		Inner:       i.Inner,
+	}, nil
+}
+
 type ctxKey int
 
 const handlerCtxKey ctxKey = 0
