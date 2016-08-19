@@ -5,6 +5,7 @@ package static
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
@@ -20,8 +21,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/daaku/go.h"
 )
